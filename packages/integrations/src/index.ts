@@ -1,36 +1,6 @@
-// General integrations
-export { AdGuardHomeIntegration } from "./adguard-home/adguard-home-integration";
-export { Aria2Integration } from "./download-client/aria2/aria2-integration";
-export { DelugeIntegration } from "./download-client/deluge/deluge-integration";
-export { NzbGetIntegration } from "./download-client/nzbget/nzbget-integration";
-export { QBitTorrentIntegration } from "./download-client/qbittorrent/qbittorrent-integration";
-export { SabnzbdIntegration } from "./download-client/sabnzbd/sabnzbd-integration";
-export { SlskdIntegration } from "./download-client/slskd/slskd-integration";
-export { TransmissionIntegration } from "./download-client/transmission/transmission-integration";
-export { HomeAssistantIntegration } from "./homeassistant/homeassistant-integration";
-export { JellyfinIntegration } from "./jellyfin/jellyfin-integration";
-export { JellyseerrIntegration } from "./jellyseerr/jellyseerr-integration";
-export { LidarrIntegration } from "./media-organizer/lidarr/lidarr-integration";
-export { RadarrIntegration } from "./media-organizer/radarr/radarr-integration";
-export { ReadarrIntegration } from "./media-organizer/readarr/readarr-integration";
-export { SonarrIntegration } from "./media-organizer/sonarr/sonarr-integration";
-export { NextcloudIntegration } from "./nextcloud/nextcloud.integration";
-export { NTFYIntegration } from "./ntfy/ntfy-integration";
-export { OpenMediaVaultIntegration } from "./openmediavault/openmediavault-integration";
-export { GlancesIntegration } from "./glances/glances-integration";
-export { OverseerrIntegration } from "./overseerr/overseerr-integration";
-export { SeerrIntegration } from "./seerr/seerr-integration";
-export { PiHoleIntegrationV5 } from "./pi-hole/v5/pi-hole-integration-v5";
-export { PiHoleIntegrationV6 } from "./pi-hole/v6/pi-hole-integration-v6";
-export { PlexIntegration } from "./plex/plex-integration";
-export { ProwlarrIntegration } from "./prowlarr/prowlarr-integration";
-export { TrueNasIntegration } from "./truenas/truenas-integration";
-export { UnraidIntegration } from "./unraid/unraid-integration";
-export { OPNsenseIntegration } from "./opnsense/opnsense-integration";
-export { ICalIntegration } from "./ical/ical-integration";
-export { CoolifyIntegration } from "./coolify/coolify-integration";
-export { ImmichIntegration } from "./immich/immich-integration";
-export { TracearrIntegration } from "./tracearr/tracearr-integration";
+// Type-only re-exports of integration classes (no runtime module loading)
+export type { PiHoleIntegrationV5 } from "./pi-hole/v5/pi-hole-integration-v5";
+export type { PiHoleIntegrationV6 } from "./pi-hole/v6/pi-hole-integration-v6";
 
 // Types
 export type { IntegrationInput } from "./base/integration";

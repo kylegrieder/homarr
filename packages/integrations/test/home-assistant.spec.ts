@@ -5,8 +5,8 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { createDb } from "@homarr/db/test";
 
-import { HomeAssistantIntegration } from "../src";
 import { TestConnectionError } from "../src/base/test-connection/test-connection-error";
+import { HomeAssistantIntegration } from "../src/homeassistant/homeassistant-integration";
 
 vi.mock("@homarr/db", async (importActual) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports

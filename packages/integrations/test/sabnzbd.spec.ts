@@ -5,8 +5,8 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { createDb } from "@homarr/db/test";
 
-import { SabnzbdIntegration } from "../src";
 import { TestConnectionError } from "../src/base/test-connection/test-connection-error";
+import { SabnzbdIntegration } from "../src/download-client/sabnzbd/sabnzbd-integration";
 import type { DownloadClientItem } from "../src/interfaces/downloads/download-client-items";
 
 vi.mock("@homarr/db", async (importActual) => {

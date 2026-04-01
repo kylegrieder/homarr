@@ -1,53 +1,8 @@
 import type { IntegrationKind } from "@homarr/definitions";
 
-import { AdGuardHomeIntegration } from "../adguard-home/adguard-home-integration";
-import { CodebergIntegration } from "../codeberg/codeberg-integration";
-import { CoolifyIntegration } from "../coolify/coolify-integration";
-import { DashDotIntegration } from "../dashdot/dashdot-integration";
-import { DockerHubIntegration } from "../docker-hub/docker-hub-integration";
-import { Aria2Integration } from "../download-client/aria2/aria2-integration";
-import { DelugeIntegration } from "../download-client/deluge/deluge-integration";
-import { NzbGetIntegration } from "../download-client/nzbget/nzbget-integration";
-import { QBitTorrentIntegration } from "../download-client/qbittorrent/qbittorrent-integration";
-import { SabnzbdIntegration } from "../download-client/sabnzbd/sabnzbd-integration";
-import { SlskdIntegration } from "../download-client/slskd/slskd-integration";
-import { TransmissionIntegration } from "../download-client/transmission/transmission-integration";
-import { EmbyIntegration } from "../emby/emby-integration";
-import { GitHubContainerRegistryIntegration } from "../github-container-registry/github-container-registry-integration";
-import { GithubIntegration } from "../github/github-integration";
-import { GitlabIntegration } from "../gitlab/gitlab-integration";
-import { GlancesIntegration } from "../glances/glances-integration";
-import { HomeAssistantIntegration } from "../homeassistant/homeassistant-integration";
-import { ICalIntegration } from "../ical/ical-integration";
-import { ImmichIntegration } from "../immich/immich-integration";
-import { JellyfinIntegration } from "../jellyfin/jellyfin-integration";
-import { JellyseerrIntegration } from "../jellyseerr/jellyseerr-integration";
-import { LinuxServerIOIntegration } from "../linuxserverio/linuxserverio-integration";
-import { LidarrIntegration } from "../media-organizer/lidarr/lidarr-integration";
-import { RadarrIntegration } from "../media-organizer/radarr/radarr-integration";
-import { ReadarrIntegration } from "../media-organizer/readarr/readarr-integration";
-import { SonarrIntegration } from "../media-organizer/sonarr/sonarr-integration";
-import { TdarrIntegration } from "../media-transcoding/tdarr-integration";
-import { MockIntegration } from "../mock/mock-integration";
-import { NextcloudIntegration } from "../nextcloud/nextcloud.integration";
-import { NPMIntegration } from "../npm/npm-integration";
-import { NTFYIntegration } from "../ntfy/ntfy-integration";
-import { OpenMediaVaultIntegration } from "../openmediavault/openmediavault-integration";
-import { OPNsenseIntegration } from "../opnsense/opnsense-integration";
-import { OverseerrIntegration } from "../overseerr/overseerr-integration";
-import { createPiHoleIntegrationAsync } from "../pi-hole/pi-hole-integration-factory";
-import { PlexIntegration } from "../plex/plex-integration";
-import { ProwlarrIntegration } from "../prowlarr/prowlarr-integration";
-import { ProxmoxIntegration } from "../proxmox/proxmox-integration";
-import { QuayIntegration } from "../quay/quay-integration";
-import { SeerrIntegration } from "../seerr/seerr-integration";
-import { TracearrIntegration } from "../tracearr/tracearr-integration";
-import { TrueNasIntegration } from "../truenas/truenas-integration";
-import { UnifiControllerIntegration } from "../unifi-controller/unifi-controller-integration";
-import { UnraidIntegration } from "../unraid/unraid-integration";
 import type { Integration, IntegrationInput } from "./integration";
 
-export const createIntegrationAsync = async <TKind extends keyof typeof integrationCreators>(
+export const createIntegrationAsync = async <TKind extends keyof typeof integrationCreatorsDefinition>(
   integration: IntegrationInput & { kind: TKind },
 ) => {
   if (!(integration.kind in integrationCreators)) {
@@ -56,7 +11,8 @@ export const createIntegrationAsync = async <TKind extends keyof typeof integrat
     );
   }
 
-  const creator = integrationCreators[integration.kind];
+  const importCreator = integrationCreatorsDefinition[integration.kind];
+  const creator = await importCreator();
 
   // factories are an array, to differentiate in js between class constructors and functions
   if (Array.isArray(creator)) {
@@ -68,59 +24,80 @@ export const createIntegrationAsync = async <TKind extends keyof typeof integrat
 
 type IntegrationInstance = new (integration: IntegrationInput) => Integration;
 
+// Each entry is a lazy thunk that dynamically imports the integration module on first use.
+// This avoids eagerly loading all ~45 integration modules (and their heavy transitive
+// dependencies like Jellyfin SDK, Octokit, GitBeaker, Immich SDK, etc.) at startup,
+// saving 100-200 MiB of heap per Node.js process.
 // factories are an array, to differentiate in js between class constructors and functions
-export const integrationCreators = {
-  piHole: [createPiHoleIntegrationAsync],
-  adGuardHome: AdGuardHomeIntegration,
-  homeAssistant: HomeAssistantIntegration,
-  jellyfin: JellyfinIntegration,
-  plex: PlexIntegration,
-  sonarr: SonarrIntegration,
-  radarr: RadarrIntegration,
-  sabNzbd: SabnzbdIntegration,
-  nzbGet: NzbGetIntegration,
-  qBittorrent: QBitTorrentIntegration,
-  deluge: DelugeIntegration,
-  transmission: TransmissionIntegration,
-  slskd: SlskdIntegration,
-  aria2: Aria2Integration,
-  jellyseerr: JellyseerrIntegration,
-  seerr: SeerrIntegration,
-  overseerr: OverseerrIntegration,
-  prowlarr: ProwlarrIntegration,
-  openmediavault: OpenMediaVaultIntegration,
-  lidarr: LidarrIntegration,
-  readarr: ReadarrIntegration,
-  dashDot: DashDotIntegration,
-  tdarr: TdarrIntegration,
-  proxmox: ProxmoxIntegration,
-  emby: EmbyIntegration,
-  nextcloud: NextcloudIntegration,
-  unifiController: UnifiControllerIntegration,
-  opnsense: OPNsenseIntegration,
-  github: GithubIntegration,
-  dockerHub: DockerHubIntegration,
-  gitlab: GitlabIntegration,
-  npm: NPMIntegration,
-  codeberg: CodebergIntegration,
-  linuxServerIO: LinuxServerIOIntegration,
-  gitHubContainerRegistry: GitHubContainerRegistryIntegration,
-  ical: ICalIntegration,
-  quay: QuayIntegration,
-  ntfy: NTFYIntegration,
-  mock: MockIntegration,
-  truenas: TrueNasIntegration,
-  unraid: UnraidIntegration,
-  coolify: CoolifyIntegration,
-  tracearr: TracearrIntegration,
-  glances: GlancesIntegration,
-  immich: ImmichIntegration,
-} satisfies Record<IntegrationKind, IntegrationInstance | [(input: IntegrationInput) => Promise<Integration>]>;
+const integrationCreatorsDefinition = {
+  piHole: () =>
+    import("../pi-hole/pi-hole-integration-factory").then((m): [typeof m.createPiHoleIntegrationAsync] => [
+      m.createPiHoleIntegrationAsync,
+    ]),
+  adGuardHome: () => import("../adguard-home/adguard-home-integration").then((m) => m.AdGuardHomeIntegration),
+  homeAssistant: () => import("../homeassistant/homeassistant-integration").then((m) => m.HomeAssistantIntegration),
+  jellyfin: () => import("../jellyfin/jellyfin-integration").then((m) => m.JellyfinIntegration),
+  plex: () => import("../plex/plex-integration").then((m) => m.PlexIntegration),
+  sonarr: () => import("../media-organizer/sonarr/sonarr-integration").then((m) => m.SonarrIntegration),
+  radarr: () => import("../media-organizer/radarr/radarr-integration").then((m) => m.RadarrIntegration),
+  sabNzbd: () => import("../download-client/sabnzbd/sabnzbd-integration").then((m) => m.SabnzbdIntegration),
+  nzbGet: () => import("../download-client/nzbget/nzbget-integration").then((m) => m.NzbGetIntegration),
+  qBittorrent: () =>
+    import("../download-client/qbittorrent/qbittorrent-integration").then((m) => m.QBitTorrentIntegration),
+  deluge: () => import("../download-client/deluge/deluge-integration").then((m) => m.DelugeIntegration),
+  transmission: () =>
+    import("../download-client/transmission/transmission-integration").then((m) => m.TransmissionIntegration),
+  slskd: () => import("../download-client/slskd/slskd-integration").then((m) => m.SlskdIntegration),
+  aria2: () => import("../download-client/aria2/aria2-integration").then((m) => m.Aria2Integration),
+  jellyseerr: () => import("../jellyseerr/jellyseerr-integration").then((m) => m.JellyseerrIntegration),
+  seerr: () => import("../seerr/seerr-integration").then((m) => m.SeerrIntegration),
+  overseerr: () => import("../overseerr/overseerr-integration").then((m) => m.OverseerrIntegration),
+  prowlarr: () => import("../prowlarr/prowlarr-integration").then((m) => m.ProwlarrIntegration),
+  openmediavault: () => import("../openmediavault/openmediavault-integration").then((m) => m.OpenMediaVaultIntegration),
+  lidarr: () => import("../media-organizer/lidarr/lidarr-integration").then((m) => m.LidarrIntegration),
+  readarr: () => import("../media-organizer/readarr/readarr-integration").then((m) => m.ReadarrIntegration),
+  dashDot: () => import("../dashdot/dashdot-integration").then((m) => m.DashDotIntegration),
+  tdarr: () => import("../media-transcoding/tdarr-integration").then((m) => m.TdarrIntegration),
+  proxmox: () => import("../proxmox/proxmox-integration").then((m) => m.ProxmoxIntegration),
+  emby: () => import("../emby/emby-integration").then((m) => m.EmbyIntegration),
+  nextcloud: () => import("../nextcloud/nextcloud.integration").then((m) => m.NextcloudIntegration),
+  unifiController: () =>
+    import("../unifi-controller/unifi-controller-integration").then((m) => m.UnifiControllerIntegration),
+  opnsense: () => import("../opnsense/opnsense-integration").then((m) => m.OPNsenseIntegration),
+  github: () => import("../github/github-integration").then((m) => m.GithubIntegration),
+  dockerHub: () => import("../docker-hub/docker-hub-integration").then((m) => m.DockerHubIntegration),
+  gitlab: () => import("../gitlab/gitlab-integration").then((m) => m.GitlabIntegration),
+  npm: () => import("../npm/npm-integration").then((m) => m.NPMIntegration),
+  codeberg: () => import("../codeberg/codeberg-integration").then((m) => m.CodebergIntegration),
+  linuxServerIO: () => import("../linuxserverio/linuxserverio-integration").then((m) => m.LinuxServerIOIntegration),
+  gitHubContainerRegistry: () =>
+    import("../github-container-registry/github-container-registry-integration").then(
+      (m) => m.GitHubContainerRegistryIntegration,
+    ),
+  ical: () => import("../ical/ical-integration").then((m) => m.ICalIntegration),
+  quay: () => import("../quay/quay-integration").then((m) => m.QuayIntegration),
+  ntfy: () => import("../ntfy/ntfy-integration").then((m) => m.NTFYIntegration),
+  mock: () => import("../mock/mock-integration").then((m) => m.MockIntegration),
+  truenas: () => import("../truenas/truenas-integration").then((m) => m.TrueNasIntegration),
+  unraid: () => import("../unraid/unraid-integration").then((m) => m.UnraidIntegration),
+  coolify: () => import("../coolify/coolify-integration").then((m) => m.CoolifyIntegration),
+  tracearr: () => import("../tracearr/tracearr-integration").then((m) => m.TracearrIntegration),
+  glances: () => import("../glances/glances-integration").then((m) => m.GlancesIntegration),
+  immich: () => import("../immich/immich-integration").then((m) => m.ImmichIntegration),
+};
 
-type IntegrationInstanceOfKind<TKind extends keyof typeof integrationCreators> = {
-  [kind in TKind]: (typeof integrationCreators)[kind] extends [(input: IntegrationInput) => Promise<Integration>]
-    ? Awaited<ReturnType<(typeof integrationCreators)[kind][0]>>
-    : (typeof integrationCreators)[kind] extends IntegrationInstance
-      ? InstanceType<(typeof integrationCreators)[kind]>
+// Compile-time check: every IntegrationKind has a corresponding lazy creator
+export const integrationCreators: Record<IntegrationKind, () => Promise<unknown>> &
+  typeof integrationCreatorsDefinition = integrationCreatorsDefinition;
+
+type ResolvedCreator<TKind extends keyof typeof integrationCreatorsDefinition> = Awaited<
+  ReturnType<(typeof integrationCreatorsDefinition)[TKind]>
+>;
+
+type IntegrationInstanceOfKind<TKind extends keyof typeof integrationCreatorsDefinition> = {
+  [kind in TKind]: ResolvedCreator<kind> extends [(input: IntegrationInput) => Promise<infer R>]
+    ? R
+    : ResolvedCreator<kind> extends IntegrationInstance
+      ? InstanceType<ResolvedCreator<kind>>
       : never;
 }[TKind];
