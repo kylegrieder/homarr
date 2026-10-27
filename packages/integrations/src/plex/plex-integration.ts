@@ -370,17 +370,29 @@ export class PlexIntegration extends Integration implements IMediaServerIntegrat
           producer: item.studio,
           rating: item.rating?.toFixed(1),
           tags: item.Genre?.map((genre) => genre.tag) ?? [],
-          href: super
-            .url(
-              // Url with children on the end results in infinite loading screen, see https://github.com/homarr-labs/homarr/issues/4078
-              `/web/index.html#!/server/${machineIdentifier}/details?key=${encodeURIComponent(item.key.replace("/children", ""))}`,
-            )
-            .toString(),
+          href: this.createDetailsHref(machineIdentifier, item.key),
           length: item.duration ? Math.round(item.duration / 1000) : undefined,
         };
       });
 
     return media;
+  }
+
+  /**
+   * Link to the details page of an item, opened through the linked app when there is one
+   * because the integration url is often only reachable by the server (e.g. host.docker.internal).
+   */
+  private createDetailsHref(machineIdentifier: string, key: string) {
+    // Url with children on the end results in infinite loading screen, see https://github.com/homarr-labs/homarr/issues/4078
+    const hash = `#!/server/${machineIdentifier}/details?key=${encodeURIComponent(key.replace("/children", ""))}`;
+    const baseUrl = super.externalUrl("/");
+
+    // The hosted Plex Web serves its client under /desktop instead of /web/index.html like a Plex Media Server
+    if (baseUrl.hostname === HOSTED_PLEX_WEB_HOSTNAME) {
+      return `${baseUrl.origin}/desktop/${hash}`;
+    }
+
+    return super.externalUrl(`/web/index.html${hash}`).toString();
   }
 
   /**
@@ -509,6 +521,7 @@ const MEDIA_RELEASES_LIMIT = 100;
 const EPISODES_PAGE_SIZE = 50;
 // A stalled Plex request must not block the merge, the fallback or the widget
 const REQUEST_TIMEOUT_MS = 10_000;
+const HOSTED_PLEX_WEB_HOSTNAME = "app.plex.tv";
 
 const recentlyAddedItemSchema = z.object({
   key: z.string(),

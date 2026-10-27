@@ -29,12 +29,12 @@ const mockFetch = vi.mocked(fetchWithTrustedCertificatesAsync);
 
 const secrets: IntegrationSecret[] = [{ kind: "apiKey", value: "plex-token" }];
 
-const createIntegration = () =>
+const createIntegration = (externalUrl: string | null = null) =>
   new PlexIntegration({
     id: "test-plex",
     name: "Test Plex",
     url: TEST_URL,
-    externalUrl: null,
+    externalUrl,
     decryptedSecrets: secrets,
   });
 
@@ -180,6 +180,50 @@ describe("PlexIntegration.getMediaReleasesAsync", () => {
         type: "tv",
       },
     ]);
+  });
+});
+
+describe("PlexIntegration.getMediaReleasesAsync links", () => {
+  const detailsHash = `#!/server/server-id/details?key=${encodeURIComponent("/library/metadata/movie")}`;
+
+  beforeEach(() => {
+    mockFetch.mockImplementation((url) => {
+      const urlString = String(url);
+      if (urlString.endsWith("/identity")) {
+        return respond({ MediaContainer: { machineIdentifier: "server-id" } });
+      }
+      if (urlString.endsWith("/library/recentlyAdded")) {
+        return respond({ MediaContainer: { Metadata: [createMetadataItem("movie", { type: "movie" })] } });
+      }
+      if (urlString.endsWith("/library/sections")) {
+        return respond({ MediaContainer: { Directory: [] } });
+      }
+      throw new Error(`Unexpected Plex request: ${urlString}`);
+    });
+  });
+
+  test("uses the integration url when no app is linked", async () => {
+    const releases = await createIntegration().getMediaReleasesAsync();
+
+    expect(releases[0]?.href).toBe(`${TEST_URL}/web/index.html${detailsHash}`);
+  });
+
+  test("uses the url of the linked app while images are still requested through the integration url", async () => {
+    const releases = await createIntegration("https://plex.public.example.com").getMediaReleasesAsync();
+
+    expect(releases[0]?.href).toBe(`https://plex.public.example.com/web/index.html${detailsHash}`);
+    expect(releases[0]?.imageUrls.poster).toBe(`proxied:${TEST_URL}/library/metadata/movie/thumb`);
+  });
+
+  test.each([
+    "https://app.plex.tv",
+    "https://app.plex.tv/",
+    "https://app.plex.tv/desktop",
+    "https://app.plex.tv/desktop/",
+  ])("uses the hosted Plex Web client path when the linked app is %s", async (externalUrl) => {
+    const releases = await createIntegration(externalUrl).getMediaReleasesAsync();
+
+    expect(releases[0]?.href).toBe(`https://app.plex.tv/desktop/${detailsHash}`);
   });
 });
 
